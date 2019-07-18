@@ -93,8 +93,8 @@ func equal(err1 error, err2 error) bool {
 }
 
 type ErrData struct {
-	Err *string    `json:"Err"`
-	As  [][]string `json:"As"`
+	Code *string    `json:"Code"`
+	As   [][]string `json:"As"`
 }
 
 type errImpl struct {
@@ -112,8 +112,8 @@ type errImpl struct {
 func New(code string) Error {
 	return &errImpl{
 		&ErrData{
-			Err: &code,
-			As:  [][]string{{caller(2), "[init]"}},
+			Code: &code,
+			As:   [][]string{{caller(2), "[init]"}},
 		},
 	}
 }
@@ -177,8 +177,8 @@ func As(err error, reason ...interface{}) Error {
 	}
 	return &errImpl{
 		&ErrData{
-			Err: e.data.Err,
-			As:  append(e.data.As, as),
+			Code: e.data.Code,
+			As:   append(e.data.As, as),
 		},
 	}
 }
@@ -230,7 +230,7 @@ func caller(depth int) string {
 
 // Error的Code方法实现
 func (e *errImpl) Code() string {
-	return *e.data.Err
+	return *e.data.Code
 }
 
 // Error的Error方法实现
@@ -260,8 +260,8 @@ func (e *errImpl) As(reason ...interface{}) Error {
 	}
 	return &errImpl{
 		&ErrData{
-			Err: e.data.Err,
-			As:  append(e.data.As, as),
+			Code: e.data.Code,
+			As:   append(e.data.As, as),
 		},
 	}
 }
