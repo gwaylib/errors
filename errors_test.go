@@ -132,7 +132,7 @@ func TestError(t *testing.T) {
 	fmt.Println(err1.(*errImpl))
 	fmt.Println(err1.As(err2))
 
-	// 并发测试
+	// TODO: concurrency testing
 	if err1 == outErr1 {
 		t.Fatal("need return another error")
 	}
