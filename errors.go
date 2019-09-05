@@ -93,7 +93,7 @@ func equal(err1 error, err2 error) bool {
 
 type ErrData struct {
 	Code *string    `json:"Code"`
-	As   [][]string `json:"As"`
+	As   [][]string `json:"As"` // Design as string array because it can print to a group in json format.
 }
 
 type errImpl struct {
@@ -137,6 +137,8 @@ func As(err error, reason ...interface{}) Error {
 		return nil
 	}
 	e := ParseError(err).(*errImpl)
+
+	// this code is same as e.As(reason...), but the caller(2) need call at here.
 	as := []string{caller(2)}
 	if len(reason) > 0 {
 		as = append(as, fmt.Sprintf("%+v", reason))
