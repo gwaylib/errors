@@ -151,6 +151,11 @@ func As(err error, reason ...interface{}) Error {
 	}
 }
 
+// Same as 'As', just implement the errors system package
+func Wrap(err error, arg ...interface{}) Error {
+	return As(err, arg...)
+}
+
 func parse(src string) *errImpl {
 	if len(src) == 0 {
 		return nil
