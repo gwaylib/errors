@@ -44,6 +44,7 @@ package errors
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -75,6 +76,11 @@ func Equal(err1 error, err2 error) bool {
 	return equal(err1, err2)
 }
 
+// Compatible with official errors.Is
+func Is(err1 error, err2 error) bool {
+	return equal(err1, err2)
+}
+
 func equal(err1 error, err2 error) bool {
 	// Memory compare
 	if err1 == err2 {
@@ -82,6 +88,9 @@ func equal(err1 error, err2 error) bool {
 	}
 	if err1 == nil || err2 == nil {
 		return false
+	}
+	if errors.Is(err1, err2) {
+		return true
 	}
 
 	eImpl1, eImpl2 := ParseError(err1), ParseError(err2)
