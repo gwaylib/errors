@@ -75,11 +75,6 @@ func Equal(err1 error, err2 error) bool {
 	return equal(err1, err2)
 }
 
-// Compatible with official errors.Is
-func Is(err1 error, err2 error) bool {
-	return equal(err1, err2)
-}
-
 func equal(err1 error, err2 error) bool {
 	// Memory compare
 	if err1 == err2 {
