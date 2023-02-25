@@ -1,4 +1,3 @@
-//
 // 错误记录器
 // error recorder
 //
@@ -14,35 +13,33 @@
 // 使用例子
 // Example
 //
-//
 // package main
 //
 // import "github.com/gwaylib/errors"
 //
-// func fn1(a int) error {
-//    if a == 1{
-//        return errors.ErrNoData.As(a)
-//    }
-//    return errors.New("not implements").As(a)
-// }
+//	func fn1(a int) error {
+//	   if a == 1{
+//	       return errors.ErrNoData.As(a)
+//	   }
+//	   return errors.New("not implements").As(a)
+//	}
 //
-// func fn2(b int) error {
-//    return errors.As(fn1(b))
-// }
+//	func fn2(b int) error {
+//	   return errors.As(fn1(b))
+//	}
 //
-// func main() {
-//    err := fn2(2)
-//    if err != nil {
-//        // errors.ErrNoData == err not necessarily true, so use Equal instead.
-//        if !errors.ErrNoData.Equal(err) {
-//            panic(err)
-//        }
+//	func main() {
+//	   err := fn2(2)
+//	   if err != nil {
+//	       // errors.ErrNoData == err not necessarily true, so use Equal instead.
+//	       if !errors.ErrNoData.Equal(err) {
+//	           panic(err)
+//	       }
 //
-//        // Deals the same error.
-//        fmt.Println(err)
-//    }
-// }
-//
+//	       // Deals the same error.
+//	       fmt.Println(err)
+//	   }
+//	}
 package errors
 
 import (
@@ -75,6 +72,11 @@ type Error interface {
 
 // Compare two error is same instance or code is match.
 func Equal(err1 error, err2 error) bool {
+	return equal(err1, err2)
+}
+
+// Compatible with official errors.Is
+func Is(err1 error, err2 error) bool {
 	return equal(err1, err2)
 }
 
