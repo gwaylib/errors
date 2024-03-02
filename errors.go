@@ -97,23 +97,15 @@ func equal(err1 error, err2 error) bool {
 	return eImpl1.Code() == eImpl2.Code()
 }
 
-type ErrData struct {
-	Code *string    `json:"Code"`
-	As   [][]string `json:"As"` // Design as string array because it can print to a group in json format.
-}
+type ErrData []interface{} // [0] is code, [1][0] is where, [1][1] is reason args
 
 type errImpl struct {
-	data *ErrData
+	data ErrData // not export the data to keep is only readed
 }
 
 // Make a new error with Error type.
 func New(code string) Error {
-	return &errImpl{
-		&ErrData{
-			Code: &code,
-			As:   [][]string{{caller(2), "[init]"}},
-		},
-	}
+	return &errImpl{append(ErrData{code}, ErrData{caller(2)})}
 }
 
 // Parse from a Error serial.
@@ -145,15 +137,12 @@ func As(err error, reason ...interface{}) Error {
 	e := ParseError(err).(*errImpl)
 
 	// this code is same as e.As(reason...), but the caller(2) need call at here.
-	as := []string{caller(2)}
+	as := ErrData{caller(2)}
 	if len(reason) > 0 {
-		as = append(as, fmt.Sprintf("%+v", reason))
+		as = append(as, reason...)
 	}
 	return &errImpl{
-		&ErrData{
-			Code: e.data.Code,
-			As:   append(e.data.As, as),
-		},
+		append(ErrData{e.data[0]}, e.data[1].(ErrData), as),
 	}
 }
 
@@ -166,12 +155,12 @@ func parse(src string) *errImpl {
 	if len(src) == 0 {
 		return nil
 	}
-	if src[:1] != "{" {
+	if src[0] != '[' {
 		return New(src).(*errImpl)
 	}
 
-	data := &ErrData{}
-	if err := json.Unmarshal([]byte(src), data); err != nil {
+	data := ErrData{}
+	if err := json.Unmarshal([]byte(src), &data); err != nil {
 		return New(src).(*errImpl)
 	}
 	return &errImpl{data}
@@ -202,14 +191,12 @@ func caller(depth int) string {
 
 	fileName := strings.Join(fileFields[len(fileFields)-1:], "/")
 	funcName := strings.Join(funcFields[len(funcFields)-1:], "/")
-
-	at = fmt.Sprintf("%s(%s:%d)", funcName, fileName, line)
-	return at
+	return fmt.Sprintf("%s:%d#%s", fileName, line, funcName)
 }
 
 // Return the code of make.
 func (e *errImpl) Code() string {
-	return *e.data.Code
+	return e.data[0].(string)
 }
 
 // Implement the error interface of go package
@@ -228,15 +215,12 @@ func (e *errImpl) MarshalJSON() ([]byte, error) {
 
 // Record the stack when call, and return a new error with new stack.
 func (e *errImpl) As(reason ...interface{}) Error {
-	as := []string{caller(2)}
+	as := []interface{}{caller(2)}
 	if len(reason) > 0 {
-		as = append(as, fmt.Sprintf("%+v", reason))
+		as = append(as, reason...)
 	}
 	return &errImpl{
-		&ErrData{
-			Code: e.data.Code,
-			As:   append(e.data.As, as),
-		},
+		append(ErrData{e.data[0]}, e.data[1].(ErrData), as),
 	}
 }
 

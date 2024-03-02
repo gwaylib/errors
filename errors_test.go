@@ -101,11 +101,15 @@ func TestAs(t *testing.T) {
 		t.Fatal(outErr2)
 	}
 	if len(outErr3.Error()) == 0 {
-		t.Fatal(outErr2)
+		t.Fatal(outErr3)
 	}
 	if len(outErr4.Error()) == 0 {
 		t.Fatal(outErr4)
 	}
+	fmt.Println("As1:", outErr1)
+	fmt.Println("As2:", outErr2)
+	fmt.Println("As3:", outErr3)
+	fmt.Println("As4:", outErr4)
 }
 
 func TestError(t *testing.T) {
@@ -128,10 +132,6 @@ func TestError(t *testing.T) {
 	if len(outErr4.Error()) == 0 {
 		t.Fatal(outErr4)
 	}
-	fmt.Println(outErr4.Error())
-	fmt.Println(err1.(*errImpl))
-	fmt.Println(err1.As(err2))
-
 	// TODO: concurrency testing
 	if err1 == outErr1 {
 		t.Fatal("need return another error")
@@ -139,4 +139,8 @@ func TestError(t *testing.T) {
 	if err2 == outErr2 {
 		t.Fatal("need return another error")
 	}
+	fmt.Println("Err:", outErr4.Error())
+	fmt.Println("Err:", err1.(*errImpl))
+	fmt.Println("Err:", err1.As(err2))
+	fmt.Println("Err:", As(New("two caller without args")))
 }
