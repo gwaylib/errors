@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -109,7 +110,8 @@ func TestAs(t *testing.T) {
 	fmt.Println("As1:", outErr1)
 	fmt.Println("As2:", outErr2)
 	fmt.Println("As3:", outErr3)
-	fmt.Println("As4:", outErr4)
+	fmt.Println("As4:", outErr4.As("two as"))
+	fmt.Println("As5:", outErr4)
 }
 
 func TestError(t *testing.T) {
@@ -139,8 +141,13 @@ func TestError(t *testing.T) {
 	if err2 == outErr2 {
 		t.Fatal("need return another error")
 	}
+	jsonIndent, err := json.MarshalIndent(err1.(*errImpl), "", "	")
+	if err != nil {
+		t.Fatal(err)
+	}
 	fmt.Println("Err:", outErr4.Error())
 	fmt.Println("Err:", err1.(*errImpl))
 	fmt.Println("Err:", err1.As(err2))
 	fmt.Println("Err:", As(New("two caller without args")))
+	fmt.Println("Json Indent:", string(jsonIndent))
 }

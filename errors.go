@@ -142,7 +142,7 @@ func As(err error, reason ...interface{}) Error {
 		as = append(as, reason...)
 	}
 	return &errImpl{
-		append(ErrData{e.data[0]}, e.data[1].(ErrData), as),
+		append(e.data, as),
 	}
 }
 
@@ -215,12 +215,12 @@ func (e *errImpl) MarshalJSON() ([]byte, error) {
 
 // Record the stack when call, and return a new error with new stack.
 func (e *errImpl) As(reason ...interface{}) Error {
-	as := []interface{}{caller(2)}
+	as := ErrData{caller(2)}
 	if len(reason) > 0 {
 		as = append(as, reason...)
 	}
 	return &errImpl{
-		append(ErrData{e.data[0]}, e.data[1].(ErrData), as),
+		append(e.data, as),
 	}
 }
 
