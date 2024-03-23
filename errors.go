@@ -184,7 +184,7 @@ func caller(depth int) string {
 		return at
 	}
 	funcFields := strings.Split(me.Name(), "/")
-	if len(fileFields) < 1 {
+	if len(funcFields) < 1 {
 		at = "domain of func is unnamed"
 		return at
 	}
