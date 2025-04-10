@@ -65,6 +65,8 @@ type Error interface {
 
 	// Record the stack when call, and return a new error with new stack.
 	As(arg ...interface{}) Error
+	// Copy the as stack data for output
+	Stack() []interface{}
 
 	// Compare to another error
 	// It should be established with err1.Code() == err2.Code().
@@ -104,8 +106,11 @@ type errImpl struct {
 }
 
 // Make a new error with Error type.
-func New(code string) Error {
-	return &errImpl{append(ErrData{code}, ErrData{caller(2)})}
+func New(code string, args ...interface{}) Error {
+	stack := make([]interface{}, len(args)+1)
+	stack[0] = caller(2)
+	copy(stack[1:], args)
+	return &errImpl{[]interface{}{code, stack}}
 }
 
 // Parse from a Error serial.
@@ -129,21 +134,18 @@ func ParseError(src error) Error {
 }
 
 // Record the reason with as, and return a new error with new stack of reason.
-// It would be safe for concurrency.
-func As(err error, reason ...interface{}) Error {
+// if err is nil, ignore the args and return a nil
+func As(err error, args ...interface{}) Error {
 	if err == nil {
 		return nil
 	}
 	e := ParseError(err).(*errImpl)
 
-	// this code is same as e.As(reason...), but the caller(2) need call at here.
-	as := ErrData{caller(2)}
-	if len(reason) > 0 {
-		as = append(as, reason...)
-	}
-	return &errImpl{
-		append(e.data, as),
-	}
+	// this code is same as e.As(args...), but the caller(2) need call for here.
+	stack := make([]interface{}, len(args)+1)
+	stack[0] = caller(2)
+	copy(stack[1:], args)
+	return &errImpl{append(e.data, stack)}
 }
 
 // Same as 'As', just implement the errors system package
@@ -214,14 +216,17 @@ func (e *errImpl) MarshalJSON() ([]byte, error) {
 }
 
 // Record the stack when call, and return a new error with new stack.
-func (e *errImpl) As(reason ...interface{}) Error {
-	as := ErrData{caller(2)}
-	if len(reason) > 0 {
-		as = append(as, reason...)
-	}
-	return &errImpl{
-		append(e.data, as),
-	}
+func (e *errImpl) As(args ...interface{}) Error {
+	stack := make([]interface{}, len(args)+1)
+	stack[0] = caller(2)
+	copy(stack[1:], args)
+	return &errImpl{append(e.data, stack)}
+}
+
+func (e *errImpl) Stack() []interface{} {
+	stack := make([]interface{}, len(e.data)-1)
+	copy(stack, e.data[1:])
+	return stack
 }
 
 // Compare to another error

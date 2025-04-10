@@ -20,7 +20,8 @@ func fn1(a int) error {
        return errors.ErrNoData.As(a)
    }
    // 返回其他错误
-   return errors.New("not implements").As(a)
+   //return errors.New("not implements").As(a)
+   return errors.New("not implements", a)
 }
 
 func fn2(b int) error {
@@ -48,9 +49,20 @@ Output：
 
 Decode: 
 ErrData[0] -- errors.New()输入的值
-ErrData[1:] -- 其他为辅助定位
-ErrData[1][0] -- 第一次调用时的位置信息
-ErrData[1][1:] -- 第一次调用时手动填写错误原因参数
+ErrData[1:] -- 其他一维数组定位栈
+ErrData[1][0] -- 第一次调用时的位置信息，必有项
+ErrData[1][1:] -- 第一次调用时用户输入的参数, 用于手工记录必要的引起错误参数信息
+```
+
+* 读取信息用于自定义格式
+```
+code := err.Code()   // 读取New()输入的msg值
+stack := err.Stack() // 读取各级As()输入的参数值
+fmt.Println(code)
+for _, s := range stack{ 
+    s1 := s.([]interface{})
+    fmt.Println(s1...)
+}
 ```
 
 

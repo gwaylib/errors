@@ -110,7 +110,7 @@ func TestAs(t *testing.T) {
 	fmt.Println("As1:", outErr1)
 	fmt.Println("As2:", outErr2)
 	fmt.Println("As3:", outErr3)
-	fmt.Println("As4:", outErr4.As("two as"))
+	fmt.Println("As4:", outErr4.As("call two as"))
 	fmt.Println("As5:", outErr4)
 }
 
@@ -150,4 +150,5 @@ func TestError(t *testing.T) {
 	fmt.Println("Err:", err1.As(err2))
 	fmt.Println("Err:", As(New("two caller without args")))
 	fmt.Println("Json Indent:", string(jsonIndent))
+	fmt.Printf("Stack output:%+v\n", err1.Stack())
 }
