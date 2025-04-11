@@ -173,21 +173,21 @@ func caller(depth int) string {
 	at := ""
 	pc, file, line, ok := runtime.Caller(depth)
 	if !ok {
-		at = "domain of caller is unknown"
+		at = "caller is false"
 	}
 	me := runtime.FuncForPC(pc)
 	if me == nil {
-		at = "domain of call is unnamed"
+		at = "pc of caller is not set"
 	}
 
 	fileFields := strings.Split(file, "/")
 	if len(fileFields) < 1 {
-		at = "domain of file is unnamed"
+		at = "file of caller is not named"
 		return at
 	}
 	funcFields := strings.Split(me.Name(), "/")
 	if len(funcFields) < 1 {
-		at = "domain of func is unnamed"
+		at = "func of caller is not named"
 		return at
 	}
 
