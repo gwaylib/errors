@@ -1,44 +1,37 @@
-// 错误记录器
-// error recorder
+// Error recorder
+// recoding one code, and recording the As caller static with caller, argument information for every As func is called.
 //
-// 本设计补充并实现了系统的error接口。
-// This design complements and implements the error interface of the go package.
+// the data static format like this:
+// ["error code", ["where stack of first caller ", "As args"...], ["where stack of second caller ", "As args"...]...]
 //
-// 用于发生错误时附带发生错误的原因、位置等信息以便还原现场。
-// It can be used to restore the scene with the information of the cause and location of the error when it occurs.
-//
-// 因本错误设计含有比较大的数据量信息，因此需要注意被调用的频率，以避免影响到系统效率。
-// Because this incorrect design contains a large amount of data information, we need to pay attention to the frequency of calls to avoid affecting system efficiency.
-//
-// 使用例子
-// Example
+// # Example
 //
 // package main
 //
 // import "github.com/gwaylib/errors"
 //
 //	func fn1(a int) error {
-//	   if a == 1{
-//	       return errors.ErrNoData.As(a)
-//	   }
-//	   return errors.New("not implements").As(a)
+//	 if a == 1 {
+//	     return errors.ErrNoData.As(a)
+//	 }
+//	 err := errors.New("not implements") // make a error code and record the first stack of caller runtime.
+//	 return err.As(a) // make the second stack of caller runtime
 //	}
 //
 //	func fn2(b int) error {
-//	   return errors.As(fn1(b))
+//	  return errors.As(fn1(b)) // make the third stack of caller runtime
 //	}
 //
 //	func main() {
-//	   err := fn2(2)
-//	   if err != nil {
-//	       // errors.ErrNoData == err not necessarily true, so use Equal instead.
-//	       if !errors.ErrNoData.Equal(err) {
-//	           panic(err)
-//	       }
+//	  err := fn2(2)
+//	  if err != nil {
+//	      // errors.ErrNoData == err not necessarily true, so use Equal instead.
+//	      if !errors.ErrNoData.Equal(err) {
+//	          panic(err)
+//	      }
 //
-//	       // Deals the same error.
-//	       fmt.Println(err)
-//	   }
+//	      fmt.Println(err)
+//	  }
 //	}
 package errors
 
@@ -73,12 +66,12 @@ type Error interface {
 	Equal(err error) bool
 }
 
-// Compare two error is same instance or code is match.
+// Compare two error are same instances or code are matched.
 func Equal(err1 error, err2 error) bool {
 	return equal(err1, err2)
 }
 
-// Compatible with official errors.Is
+// Alias name of Equal func, compatible with official errors.Is
 func Is(err1 error, err2 error) bool {
 	return equal(err1, err2)
 }
@@ -91,18 +84,22 @@ func equal(err1 error, err2 error) bool {
 	if err1 == nil || err2 == nil {
 		return false
 	}
+
+	// checking the standard package errors
 	if errors.Is(err1, err2) {
 		return true
 	}
 
+	// parse the error and compare the code, net transfer the error would be serial by Error() function.
 	eImpl1, eImpl2 := ParseError(err1), ParseError(err2)
 	return eImpl1.Code() == eImpl2.Code()
 }
 
-type ErrData []interface{} // [0] is code, [1][0] is where, [1][1] is reason args
+// ["error code", ["where stack of first caller ", "As args"...], ["where stack of second caller ", "As args"...]...]
+type ErrData []interface{}
 
 type errImpl struct {
-	data ErrData // not export the data to keep is only readed
+	data ErrData // not export the data to keep it read only.
 }
 
 // Make a new error with Error type.
@@ -113,7 +110,8 @@ func New(code string, args ...interface{}) Error {
 	return &errImpl{[]interface{}{code, stack}}
 }
 
-// Parse from a Error serial.
+// Parse error from serial string, if it's ErrData format, create an Error of this package defined.
+// if src is empty, return a nil Error
 func Parse(src string) Error {
 	if len(src) == 0 {
 		return nil
@@ -122,35 +120,43 @@ func Parse(src string) Error {
 }
 
 // Parse Error from a error instance.
-// If the error is type of Error, it will be return directly.
-func ParseError(src error) Error {
-	if src == nil {
+// If the error is the type of interface Error, directly convert to the Error interface of this package.
+// Call Parse(err.Error()) in others.
+func ParseError(err error) Error {
+	if err == nil {
 		return nil
 	}
-	if e, ok := src.(*errImpl); ok {
+	if e, ok := err.(*errImpl); ok {
 		return e
 	}
-	return parse(src.Error())
+	return parse(err.Error())
 }
 
-// Record the reason with as, and return a new error with new stack of reason.
-// if err is nil, ignore the args and return a nil
-func As(err error, args ...interface{}) Error {
+func as(depth int, err error, args ...interface{}) Error {
 	if err == nil {
 		return nil
 	}
 	e := ParseError(err).(*errImpl)
-
-	// this code is same as e.As(args...), but the caller(2) need call for here.
 	stack := make([]interface{}, len(args)+1)
-	stack[0] = caller(2)
+	stack[0] = caller(depth)
 	copy(stack[1:], args)
-	return &errImpl{append(e.data, stack)}
+	data := make([]interface{}, len(e.data)+1)
+
+	copy(data, e.data)
+	data[len(data)-1] = stack
+	return &errImpl{data: data}
 }
 
-// Same as 'As', just implement the errors system package
-func Wrap(err error, arg ...interface{}) Error {
-	return As(err, arg...)
+// Record a stack of runtime caller and the reason with as.
+// return a new error pointer after called.
+// return nil if err is nil
+func As(err error, args ...interface{}) Error {
+	return as(3, err, args...)
+}
+
+// Alias name of 'As'
+func Wrap(err error, args ...interface{}) Error {
+	return as(3, err, args...)
 }
 
 func parse(src string) *errImpl {
@@ -165,7 +171,7 @@ func parse(src string) *errImpl {
 	if err := json.Unmarshal([]byte(src), &data); err != nil {
 		return New(src).(*errImpl)
 	}
-	return &errImpl{data}
+	return &errImpl{data: data}
 }
 
 // call for domain
@@ -217,10 +223,7 @@ func (e *errImpl) MarshalJSON() ([]byte, error) {
 
 // Record the stack when call, and return a new error with new stack.
 func (e *errImpl) As(args ...interface{}) Error {
-	stack := make([]interface{}, len(args)+1)
-	stack[0] = caller(2)
-	copy(stack[1:], args)
-	return &errImpl{append(e.data, stack)}
+	return as(3, e, args...)
 }
 
 func (e *errImpl) Stack() []interface{} {

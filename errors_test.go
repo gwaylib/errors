@@ -92,6 +92,7 @@ func TestAs(t *testing.T) {
 	err2 := New("test")
 
 	outErr1 := As(err1, "test", "test")
+	outErr1Wrap := Wrap(err1, "wrap called")
 	outErr2 := err2.As("test", "test")
 	outErr3 := As(err1, 123, 456)
 	outErr4 := err2.As(123, 456)
@@ -108,6 +109,7 @@ func TestAs(t *testing.T) {
 		t.Fatal(outErr4)
 	}
 	fmt.Println("As1:", outErr1)
+	fmt.Println("Wrap1:", outErr1Wrap)
 	fmt.Println("As2:", outErr2)
 	fmt.Println("As3:", outErr3)
 	fmt.Println("As4:", outErr4.As("call two as"))
