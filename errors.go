@@ -1,8 +1,10 @@
-// Error recorder
+// Error recorder with As
+//
 // recoding one code, and recording the As caller static with caller, argument information for every As func is called.
 //
 // the data static format like this:
-// ["error code", ["where stack of first caller ", "As args"...], ["where stack of second caller ", "As args"...]...]
+// ["error code", ["runtime stack of New"], ["runtime stack of As", "args of As"...], ["runtime statick of As"]...]
+// the first one is error code, the second is New, the others are func As been called.
 //
 // # Example
 //
@@ -202,9 +204,16 @@ func caller(depth int) string {
 	return fmt.Sprintf("%s:%d#%s", fileName, line, funcName)
 }
 
-// Return the code of make.
+// Return the code of New or Parse.
 func (e *errImpl) Code() string {
 	return e.data[0].(string)
+}
+
+// Copy and return the stack array
+func (e *errImpl) Stack() []interface{} {
+	stack := make([]interface{}, len(e.data)-1)
+	copy(stack, e.data[1:])
+	return stack
 }
 
 // Implement the error interface of go package
@@ -221,19 +230,12 @@ func (e *errImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.data)
 }
 
-// Record the stack when call, and return a new error with new stack.
+// Record caller stack and return a new error interface.
 func (e *errImpl) As(args ...interface{}) Error {
 	return as(3, e, args...)
 }
 
-func (e *errImpl) Stack() []interface{} {
-	stack := make([]interface{}, len(e.data)-1)
-	copy(stack, e.data[1:])
-	return stack
-}
-
 // Compare to another error
-// It should be established with err1.Code() == err2.Code().
 func (e *errImpl) Equal(l error) bool {
 	return equal(e, l)
 }

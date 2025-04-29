@@ -39,25 +39,22 @@ func main() {
 }
 ```
 
-* Analyze errors position information
+* Analyze errors position information of Error()
 ```text
 Output：
 ["test",["errors_test.go:90#errors.TestAs"],["errors_test.go:95#errors.TestAs",123,456]]
 
 Decode: 
-ErrData[0] -- the input of errors.New()
-ErrData[1:] -- position information
-ErrData[1][0] -- the position information when first calling 'As'
-ErrData[1][1:] -- the args when first calling 'As'
+["error code", ["runtime stack of New"], ["runtime stack of As", "args of As"...]]
+the first one is error code, the second is New, the others are As's called.
 ```
 
 
 ### Error handling suggestions
-
-*) Prioritize handling errors before handling normal logic, as errors are less likely to be ignored and make the program more robust;
-*) Unless the error handling result is clearly defined, errors should always be returned to the caller;
-*) If it is not possible to return to the caller, user prompts or logs should be provided instead of discarding errors to fully understand what has happened in the program;
-*) Normal logic should not be written in if conditions to ensure good text indentation and reading of the code;
+* Prioritize handling errors before handling normal logic, where errors are less likely to be ignored and make the program more robust;
+* Unless the internal handling result of the error is specified, the error should be returned to the caller;
+* If there is no need to return to the caller, a log should be recorded instead of discarding the error
+* Normal logic should be avoided from being placed in 'if' as much as possible for easier indentation reading.
 ```text
 // Suggest
 rows, err := db.Query(...)
